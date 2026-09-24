@@ -1,0 +1,21 @@
+[project]
+name = "sb49-whatif"
+version = "0.1.0"
+description = "Change one play of Super Bowl XLIX and Monte Carlo the rest of the game"
+requires-python = ">=3.10"
+dependencies = [
+    "nflreadpy>=0.1.5",
+    "pandas>=2.0",
+    "numpy>=1.26",
+    "pyarrow>=14",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+sb49 = "sb49.cli:main"
+
+[tool.setuptools]
+packages = ["sb49"]
