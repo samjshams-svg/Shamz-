@@ -1,5 +1,9 @@
 # Super Bowl XLIX what-if
 
+> **See also: [NFL What If Machine](nfl-what-if-machine/)**, the bigger follow-up project. It lets you
+> rewrite any 2010–2019 play, uses a drive-based game model, and replays the next two seasons with Elo and
+> a playoff simulator. It has a command line and a Streamlit page.
+
 Change the result of any single play in Super Bowl XLIX (Patriots 28, Seahawks 24) and
 estimate how often each team wins from there with a Monte Carlo simulation.
 
