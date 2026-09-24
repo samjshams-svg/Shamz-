@@ -1,0 +1,22 @@
+# Super Bowl XLIX, 2014 season (Feb 1, 2015). Seattle at the New England 1,
+# 2nd and goal, 0:26 left, down 28-24. Instead of Russell Wilson's pass
+# (intercepted by Malcolm Butler), Marshawn Lynch gets the handoff.
+name = "Super Bowl XLIX: Lynch gets the ball"
+
+[play]
+season = 2014
+week = 21
+team = "SEA"
+qtr = 4
+clock = "0:26"
+search = "INTERCEPTED"      # or simply: game_id = "2014_21_NE_SEA" and play_id = 4205
+
+[edit]
+outcome = "run"             # the run's result is drawn from real goal-line runs
+
+[simulation]
+game_sims = 10000
+season_sims = 10000
+seasons_ahead = 2
+seed = 49
+teams = ["SEA", "NE"]

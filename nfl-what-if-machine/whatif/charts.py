@@ -192,3 +192,100 @@ def _finish(fig, path: str | None):
         fig.savefig(path, dpi=150, bbox_inches="tight", facecolor=SURFACE)
         plt.close(fig)
     return fig
+
+
+# ---- Part 2 ------------------------------------------------------------------------------
+def _xpos(season: int, week: float, first: int) -> float:
+    return (season - first) + week / 23.0
+
+
+def elo_trajectory(res, path: str | None = None):
+    """Real Elo vs simulated (with and without the change) for the report teams."""
+    from . import elo as E
+    from .teams import TEAM_INDEX
+    _setup()
+    teams = res.teams
+    first = res.scenario_season if hasattr(res, "scenario_season") else res.alternate.seasons[0].season
+    last = res.alternate.seasons[-1].season
+    fig, axes = plt.subplots(1, len(teams), figsize=(6.5 * len(teams), 5.2), facecolor=SURFACE, sharey=True,
+                             squeeze=False)
+    xs = np.array([_xpos(s, w, first) for s, w in res.alternate.timeline])
+    for ax, team in zip(axes[0], teams):
+        _style(ax)
+        i = TEAM_INDEX[team]
+        for s in range(first, last + 2):
+            ax.axvline(s - first, color=GRID, lw=1, zorder=0)
+        real = E.team_series(res.elo_log, team, range(first, last + 1))
+        ax.plot([_xpos(r.season, r.week, first) for r in real.itertuples()], real["elo"], color=REAL, lw=2,
+                label="Actual history")
+        base = np.array([m[i] for m in res.baseline.elo_mean])
+        alt = np.array([m[i] for m in res.alternate.elo_mean])
+        lo = np.array([m[i] for m in res.alternate.elo_p10])
+        hi = np.array([m[i] for m in res.alternate.elo_p90])
+        ax.fill_between(xs, lo, hi, color=ALT, alpha=0.15, lw=0, label="With the edit: middle 80%")
+        ax.plot(xs, base, color=BASE, lw=1.5, ls=(0, (4, 3)), label="Simulated, no change (average)")
+        ax.plot(xs, alt, color=ALT, lw=2, label="Simulated, with the edit (average)")
+        for a in res.scenario.adjustments:
+            if a.team == team:
+                x = _xpos(a.season, max(a.week - 1, 0), first)
+                ax.annotate(f"{a.elo:+g}: {a.note[:28]}", (x, alt[np.argmin(np.abs(xs - x))]),
+                            xytext=(4, 18), textcoords="offset points", fontsize=8, color=TEXT_2,
+                            arrowprops=dict(arrowstyle="-", color=TEXT_2, lw=0.8))
+        ax.set_xlim(0, last - first + 1)
+        ax.set_xticks([s - first + 0.5 for s in range(first, last + 1)], [str(s) for s in range(first, last + 1)])
+        ax.set_title(team, loc="left", fontsize=12, color=TEXT)
+        ax.grid(axis="y", color=GRID, lw=1)
+        ax.set_axisbelow(True)
+    axes[0][0].set_ylabel("Elo rating")
+    handles, labels = axes[0][0].get_legend_handles_labels()
+    fig.suptitle("Elo rating: actual history vs. simulated histories", x=0.06, y=1.04, ha="left", fontsize=14,
+                 color=TEXT)
+    fig.legend(handles, labels, loc="upper left", bbox_to_anchor=(0.055, 1.0), ncol=4, frameon=False, fontsize=9)
+    return _finish(fig, path)
+
+
+def odds_table(res, path: str | None = None):
+    """Season-by-season table: actual, simulated without the change, simulated with it."""
+    from .scenario import METRICS
+    _setup()
+    table = res.odds_table()
+    rows, colors = [], []
+    for r in table.to_dict("records"):
+        for world, label in (("actual", "Actual"), ("base", "No change"), ("alt", "With the edit")):
+            cells = [str(r["season"]) if world == "actual" else "", r["team"] if world == "actual" else "", label]
+            for key, _ in METRICS:
+                v = r[f"{world}_{key}"]
+                if key == "wins":
+                    txt = f"{v:.1f}"
+                    if world == "alt":
+                        txt += f" ({v - r['base_wins']:+.1f})"
+                elif world == "actual":
+                    txt = "yes" if v >= 0.5 else "no"
+                else:
+                    txt = f"{v:.1%}"
+                    if world == "alt":
+                        txt += f" ({(v - r[f'base_{key}']) * 100:+.1f})"
+                cells.append(txt)
+            rows.append(cells)
+            colors.append({"actual": "#eef4fc", "base": SURFACE, "alt": "#fdf0ea"}[world])
+    cols = ["Season", "Team", ""] + [label for _, label in METRICS]
+    fig, ax = plt.subplots(figsize=(12, 0.3 * len(rows) + 0.8), facecolor=SURFACE)
+    ax.axis("off")
+    t = ax.table(cellText=rows, colLabels=cols, loc="upper left", cellLoc="right", colLoc="right",
+                 colWidths=[0.07, 0.06, 0.12] + [0.15] * len(METRICS))
+    t.auto_set_font_size(False)
+    t.set_fontsize(9.5)
+    t.scale(1, 1.35)
+    for (ri, ci), cell in t.get_celld().items():
+        cell.set_edgecolor(GRID)
+        cell.set_linewidth(0.6)
+        if ri == 0:
+            cell.set_text_props(color=TEXT_2, weight="bold")
+            cell.set_facecolor(SURFACE)
+        else:
+            cell.set_facecolor(colors[ri - 1])
+        if ci in (0, 1, 2):
+            cell._loc = "left"
+    ax.set_title(f"Season-by-season odds over {res.scenario.season_sims:,} simulated histories "
+                 "(change vs. no change in points)", loc="left", fontsize=12, color=TEXT)
+    return _finish(fig, path)

@@ -1,0 +1,41 @@
+# Same edit as sb49_lynch.toml, plus hand-set "narrative adjustments".
+# These numbers are opinions, not data: edit them freely. 25 Elo points is
+# roughly one point of point spread.
+name = "Super Bowl XLIX: Lynch gets the ball (with narrative adjustments)"
+
+[play]
+game_id = "2014_21_NE_SEA"
+play_id = 4205
+
+[edit]
+outcome = "run"
+
+[simulation]
+game_sims = 10000
+season_sims = 10000
+seasons_ahead = 2
+seed = 49
+teams = ["SEA", "NE"]
+
+[[adjustment]]
+team = "SEA"
+season = 2015
+week = 1
+elo = 15
+if_winner = "SEA"
+note = "No offseason hangover: the locker-room rift over the play call never happens"
+
+[[adjustment]]
+team = "SEA"
+season = 2016
+week = 1
+elo = 20
+note = "Marshawn Lynch doesn't retire after 2015"
+
+[[adjustment]]
+team = "NE"
+season = 2015
+week = 1
+elo = -10
+if_winner = "SEA"
+note = "A Super Bowl loss adds to the Deflategate distraction"
